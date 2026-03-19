@@ -213,32 +213,30 @@ export async function saveDailyGreenIndex(index: DailyGreenIndex): Promise<void>
   }
 }
 
-export async function loginOrSignup(user: any): Promise<boolean> {
+export async function registerUser(user: any): Promise<boolean> {
   try {
-    // 1. Try Signup
-    let res = await fetch(`${BACKEND_URL}/auth/signup`, {
+    const res = await fetch(`${BACKEND_URL}/auth/signup`, {
       ...fetchConfig,
       method: "POST",
-      body: JSON.stringify(user), // contains email, password, city, state, lat, lon
+      body: JSON.stringify(user),
     });
-
-    if (res.ok) {
-      return true; // signed up and cookie set
-    }
-
-    if (res.status === 400) {
-      // "Email already registered" -> 2. Try Login
-      res = await fetch(`${BACKEND_URL}/auth/login`, {
-        ...fetchConfig,
-        method: "POST",
-        body: JSON.stringify({ email: user.email, password: user.password }),
-      });
-      return res.ok; 
-    }
-    
-    return false;
+    return res.ok;
   } catch (err) {
-    console.error("login flow failed", err);
+    console.error("Signup failed", err);
+    return false;
+  }
+}
+
+export async function loginUser(credentials: any): Promise<boolean> {
+  try {
+    const res = await fetch(`${BACKEND_URL}/auth/login`, {
+      ...fetchConfig,
+      method: "POST",
+      body: JSON.stringify(credentials),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("Login failed", err);
     return false;
   }
 }

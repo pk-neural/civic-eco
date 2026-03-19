@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CitySearch } from "./city-search"
-import { loginOrSignup } from "@/lib/storage"
+import { loginUser, registerUser } from "@/lib/storage"
 import type { User } from "@/lib/types"
 
 export function LoginForm() {
@@ -19,6 +19,7 @@ export function LoginForm() {
   const [city, setCity] = useState<{ name: string; state: string; lat: number; lon: number } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [isLogin, setIsLogin] = useState(true)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,28 +30,33 @@ export function LoginForm() {
       return
     }
 
-    if (!city) {
-      setError("Please select your city")
+    if (!isLogin && !city) {
+      setError("Please select your city for registration")
       return
     }
 
     setLoading(true)
 
-    const success = await loginOrSignup({
-      email,
-      password,
-      city: city.name,
-      state: city.state,
-      lat: city.lat,
-      lon: city.lon,
-    })
+    let success = false
+    if (isLogin) {
+      success = await loginUser({ email, password })
+    } else {
+      success = await registerUser({
+        email,
+        password,
+        city: city!.name,
+        state: city!.state,
+        lat: city!.lat,
+        lon: city!.lon,
+      })
+    }
 
     setLoading(false)
 
     if (success) {
       router.push("/dashboard")
     } else {
-      setError("Login failed. Check your password or try again.")
+      setError(isLogin ? "Login failed. Check your password or try again." : "Registration failed. Email might be taken.")
     }
   }
 
@@ -108,13 +114,15 @@ export function LoginForm() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-foreground/80">Select Your City (India)</Label>
-              <p className="text-xs text-muted-foreground mb-2">
-                Search and select your city. All dashboards will use this location.
-              </p>
-              <CitySearch onSelect={setCity} selected={city ? { name: city.name, state: city.state } : null} />
-            </div>
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label className="text-foreground/80">Select Your City (India)</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Search and select your city. All dashboards will use this location.
+                </p>
+                <CitySearch onSelect={setCity} selected={city ? { name: city.name, state: city.state } : null} />
+              </div>
+            )}
 
             {error && <p className="text-sm text-red-400 text-center">{error}</p>}
 
@@ -126,13 +134,25 @@ export function LoginForm() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
+                  {isLogin ? "Signing in..." : "Creating account..."}
                 </>
               ) : (
-                "Sign In"
+                isLogin ? "Sign In" : "Sign Up"
               )}
             </Button>
           </form>
+
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => {
+                setIsLogin(!isLogin)
+                setError("")
+              }}
+              className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+            >
+              {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
+            </button>
+          </div>
 
           <p className="text-center text-xs text-muted-foreground mt-6">Your gateway to sustainable living</p>
         </div>
