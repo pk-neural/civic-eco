@@ -42,14 +42,13 @@ def signup(user: UserCreate, response: Response, db: Session = Depends(get_db)):
         data={"sub": new_user.id},
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    # HTTPOnly securely stores it so frontend JS can't read it
     response.set_cookie(
         key="access_token",
         value=f"Bearer {access_token}",
         httponly=True,
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         samesite="lax",
-        secure=False  # Set to True in production (HTTPS)
+        secure=False
     )
     
     return new_user
